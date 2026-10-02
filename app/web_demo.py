@@ -20,6 +20,38 @@ from app.services.rag_pipeline import RAGPipeline
 
 app = FastAPI(title="Mutual Fund FAQ Demo")
 
+@app.on_event("startup")
+def startup_ingest():
+    # If ChromaDB is empty (e.g., fresh deploy on Render), ingest the 5 pages once.
+    try:
+        from app.db.vector_client import get_or_create_collection
+        col = get_or_create_collection()
+        if col.count() == 0:
+            from app.ingestion.parser import DocumentParser
+            from app.ingestion.chunker import RecursiveTextChunker
+            from app.ingestion.indexer import VectorIndexer
+            from app.config import get_settings
+
+            SOURCE_URLS = [
+                ("HDFC Large Cap Fund (Direct, Growth)", "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth"),
+                ("HDFC Equity Fund - Flexi Cap (Direct, Growth)", "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth"),
+                ("HDFC ELSS Tax Saver Fund (Direct, Growth)", "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth"),
+                ("HDFC Small Cap Fund (Direct, Growth)", "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth"),
+                ("HDFC Balanced Advantage Fund (Direct, Growth)", "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth"),
+            ]
+            settings = get_settings()
+            parser = DocumentParser()
+            chunker = RecursiveTextChunker(chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap)
+            indexer = VectorIndexer()
+            for title, url in SOURCE_URLS:
+                try:
+                    parsed = parser.parse(url, "url")
+                    chunks = chunker.chunk_text(parsed.text, parsed.pages)
+                    indexer.index_chunks(chunks, document_id=url, filename=title, source_url=url)
+                except Exception as e:
+                    print(f"Failed to ingest {url}: {e}")
+    except Exception as e:
+        print(f"Startup ingestion check failed: {e}")
 import os
 _dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 if os.path.isdir(_dist):

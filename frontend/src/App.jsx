@@ -18,7 +18,7 @@ function App() {
     setQuestion('')
     setLoading(true)
     try {
-      const r = await fetch('/api/ask', {
+      const r = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: q }),
@@ -54,7 +54,7 @@ function App() {
             )}
           </div>
         ))}
-        {loading && <div><i>Thinking…</i></div>}
+        {loading && <div><i>Thinkingï¿½</i></div>}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <input style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #bbb' }} value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Type your question..." />

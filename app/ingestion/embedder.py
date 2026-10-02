@@ -6,27 +6,18 @@ settings = get_settings()
 
 
 class HuggingFaceEmbedder:
-    """Generate embeddings using a local HuggingFace sentence-transformers model."""
+    """Generate embeddings using a local ONNX-based all-MiniLM-L6-v2 model
+    (much lighter on memory than the full torch-based sentence-transformers)."""
 
     def __init__(self):
-        from sentence_transformers import SentenceTransformer
-        self.model_name = settings.hf_embedding_model
-        self.model = SentenceTransformer(self.model_name)
+        import chromadb.utils.embedding_functions as ef
+        self._ef = ef.DefaultEmbeddingFunction()
 
     def embed_text(self, text: str) -> list[float]:
-        """Generate embedding for a single text."""
-        embedding = self.model.encode(text, convert_to_numpy=True)
-        return embedding.tolist()
+        return self._ef([text])[0]
 
     def embed_batch(self, texts: list[str], batch_size: int = 100) -> list[list[float]]:
-        """Generate embeddings for a batch of texts."""
-        embeddings = self.model.encode(
-            texts,
-            batch_size=batch_size,
-            convert_to_numpy=True,
-            show_progress_bar=False,
-        )
-        return [e.tolist() for e in embeddings]
+        return self._ef(texts)
 
 
 # Backwards-compatible alias (imports elsewhere still work)

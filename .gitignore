@@ -38,3 +38,6 @@ htmlcov/
 # Node
 node_modules/
 dist/
+
+!frontend/dist
+!frontend/dist/**

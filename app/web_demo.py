@@ -20,6 +20,12 @@ from app.services.rag_pipeline import RAGPipeline
 
 app = FastAPI(title="Mutual Fund FAQ Demo")
 
+import os
+_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.isdir(_dist):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -91,6 +97,12 @@ class AskRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def index():
+    # Prefer the built React app, fall back to the inline demo UI
+    import os
+    dist_index = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist", "index.html")
+    if os.path.exists(dist_index):
+        with open(dist_index, "r", encoding="utf-8") as f:
+            return f.read()
     return HTML
 
 

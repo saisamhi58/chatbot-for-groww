@@ -8,7 +8,7 @@ venv/
 env/
 ENV/
 *.egg-info/
-dist/
+/dist/
 build/
 
 # Environment
@@ -37,7 +37,7 @@ htmlcov/
 
 # Node
 node_modules/
-dist/
+/dist/
 
 !frontend/dist
 !frontend/dist/**
